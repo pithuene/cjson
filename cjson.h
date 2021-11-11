@@ -25,6 +25,7 @@ typedef struct _JsonValue {
     map_t(struct _JsonValue *) Object;
     vec_t(struct _JsonValue *) Array;
   } value;
+  vec_t(char *) keys; // TODO: Hack because I have not implemented looping over maps yet
 } JsonValue;
 
 bool json_parse(JsonValue ** result, char ** json);
