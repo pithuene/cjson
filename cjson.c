@@ -26,6 +26,24 @@ static bool parse_undefined(JsonValue ** result, char ** json) {
   return false;
 }
 
+static bool parse_bool(JsonValue ** result, char ** json) {
+  if (!strncmp(*json, "true", 4)) {
+    *json += 4;
+    *result = malloc(sizeof(JsonValue));
+    (*result)->type = JsonBool;
+    (*result)->value.Bool = true;
+    return true;
+  }
+  if (!strncmp(*json, "false", 5)) {
+    *json += 5;
+    *result = malloc(sizeof(JsonValue));
+    (*result)->type = JsonBool;
+    (*result)->value.Bool = false;
+    return true;
+  }
+  return false;
+}
+
 static bool parse_number(JsonValue ** result, char ** json) {
   char * beginning = *json; // Copy the pointer to read without modifying
   char * end = beginning;
@@ -103,6 +121,7 @@ bool json_parse(JsonValue ** result, char ** json) {
     if (parse_array(result, json)) break;
     if (parse_null(result, json)) break;
     if (parse_undefined(result, json)) break;
+    if (parse_bool(result, json)) break;
     if (parse_number(result, json)) break;
     return false;
   }
@@ -129,6 +148,10 @@ void json_print(JsonValue * json, int depth) {
     case JsonUndefined:
       print_depth(depth);
       printf("undefined,\n");
+      break;
+    case JsonBool:
+      print_depth(depth);
+      printf(json->value.Bool ? "true,\n" : "false,\n");
       break;
     case JsonArray:
       print_depth(depth);
