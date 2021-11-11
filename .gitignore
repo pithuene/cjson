@@ -1,3 +1,4 @@
 test
 libcjson.a
+libds.a
 cjson.o
