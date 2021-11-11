@@ -2,6 +2,48 @@
 
 #include "cjson.h"
 
+static bool parse_string(JsonValue ** result, char ** json) {
+  if (**json != '"') {
+    return false;
+  }
+
+  (*json)++; // Skip the "
+
+  char * beginning = *json; // Copy the pointer to read without modifying
+  char * end = beginning;
+
+  // Find the end of the string
+  bool escape = false; // next char escaped
+  while (*end != 0 && !(*end == '"' && !escape)) {
+    if (*end == '\\' && !escape) {
+      escape = true;
+    } else {
+      escape = false;
+    }
+    end++;
+  }
+
+  if (*end != '"') {
+    printf("Found unhandled character '%c' in string\n", *end);
+    return false;
+  }
+
+  size_t length = ((size_t) end) - ((size_t) beginning);
+
+  char * string = malloc(length + 1);
+  strncpy(string, beginning, length);
+  
+  *result = malloc(sizeof(JsonValue));
+  (*result)->type = JsonString;
+  (*result)->value.String = string;
+
+  // Move pointer after the value
+  end++; // Skip the "
+  *json = end;
+
+  return true;
+}
+
 static bool parse_null(JsonValue ** result, char ** json) {
   if (!strncmp(*json, "null", 4)) {
     *json += 4;
@@ -86,6 +128,7 @@ static bool parse_array(JsonValue ** result, char ** json) {
     if (success) {
       vecpush(values, array_val);
     } else {
+      // TODO: Handle multiple commas [1,,,,,5] currently parses fine as [1, 5]
       if (isspace(*ptr) || *ptr == ',') {
         ptr++;
       } else if (*ptr == ']') { // End of array
@@ -123,6 +166,7 @@ bool json_parse(JsonValue ** result, char ** json) {
     if (parse_undefined(result, json)) break;
     if (parse_bool(result, json)) break;
     if (parse_number(result, json)) break;
+    if (parse_string(result, json)) break;
     return false;
   }
   return true;
@@ -140,6 +184,10 @@ void json_print(JsonValue * json, int depth) {
     case JsonNumber:
       print_depth(depth);
       printf("%f,\n", json->value.Number);
+      break;
+    case JsonString:
+      print_depth(depth);
+      printf("\"%s\",\n", json->value.String);
       break;
     case JsonNull:
       print_depth(depth);
