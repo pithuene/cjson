@@ -2,6 +2,30 @@
 
 #include "cjson.h"
 
+static bool parse_null(JsonValue ** result, char ** json) {
+  if (!strncmp(*json, "null", 4)) {
+    *json += 4;
+
+    *result = malloc(sizeof(JsonValue));
+    (*result)->type = JsonNull;
+
+    return true;
+  }
+  return false;
+}
+
+static bool parse_undefined(JsonValue ** result, char ** json) {
+  if (!strncmp(*json, "undefined", 9)) {
+    *json += 9;
+
+    *result = malloc(sizeof(JsonValue));
+    (*result)->type = JsonUndefined;
+
+    return true;
+  }
+  return false;
+}
+
 static bool parse_number(JsonValue ** result, char ** json) {
   char * beginning = *json; // Copy the pointer to read without modifying
   char * end = beginning;
@@ -77,6 +101,8 @@ bool json_parse(JsonValue ** result, char ** json) {
       continue;
     }
     if (parse_array(result, json)) break;
+    if (parse_null(result, json)) break;
+    if (parse_undefined(result, json)) break;
     if (parse_number(result, json)) break;
     return false;
   }
@@ -95,6 +121,14 @@ void json_print(JsonValue * json, int depth) {
     case JsonNumber:
       print_depth(depth);
       printf("%f,\n", json->value.Number);
+      break;
+    case JsonNull:
+      print_depth(depth);
+      printf("null,\n");
+      break;
+    case JsonUndefined:
+      print_depth(depth);
+      printf("undefined,\n");
       break;
     case JsonArray:
       print_depth(depth);
