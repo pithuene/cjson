@@ -216,7 +216,6 @@ static bool parse_object(JsonValue ** result, char ** json) {
     *result = malloc(sizeof(JsonValue));
     (*result)->type = JsonObject;
     (*result)->value.Object = values;
-    (*result)->keys = keys;
     return true;
   } else {
     printf("Found unhandled character '%c' in object\n", *ptr);
@@ -284,10 +283,10 @@ void json_print(JsonValue * json, int depth) {
     case JsonObject:
       print_depth(depth);
       printf("{\n");
-      for (i = 0; i < veclen(json->keys); i++) {
+      mapforeach(char * key, JsonValue * value, json->value.Object) {
         print_depth(depth + 1);
-        printf("\"%s\":\n", json->keys[i]);
-        json_print(mapget(json->value.Object, json->keys[i]), depth+2);
+        printf("\"%s\":\n", key);
+        json_print(value, depth+2);
       }
       print_depth(depth);
       printf("},\n");
